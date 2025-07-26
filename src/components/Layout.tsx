@@ -5,15 +5,10 @@ import { supabase } from '@/lib/supabase'
 import type { User } from '@supabase/supabase-js'
 import { 
   Home,
-  Search,
-  BarChart3,
-  Users,
-  Settings,
   LogOut,
-  Bell,
-  Menu,
-  X
+  User as UserIcon
 } from 'lucide-react'
+import { motion } from 'framer-motion'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -21,7 +16,6 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   const [user, setUser] = useState<User | null>(null)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -44,10 +38,6 @@ export default function Layout({ children }: LayoutProps) {
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: Home },
-    { name: 'Prospects', href: '/prospects', icon: Search },
-    { name: 'Relatórios', href: '/reports', icon: BarChart3 },
-    { name: 'Leads', href: '/leads', icon: Users },
-    { name: 'Configurações', href: '/settings', icon: Settings },
   ]
 
   const isActive = (href: string) => {
@@ -57,109 +47,119 @@ export default function Layout({ children }: LayoutProps) {
     return location.pathname.startsWith(href)
   }
 
+  // Extrair nome do usuário do email
+  const getUserName = () => {
+    if (!user?.email) return 'Usuário'
+    return user.email.split('@')[0]
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            {/* Logo */}
-            <div className="flex items-center">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-orange-500 rounded-lg mr-3"></div>
-              <h1 className="text-xl font-bold text-gray-900">ProspectAI</h1>
+    <div className="flex h-screen bg-gray-50">
+      {/* Sidebar */}
+      <motion.div 
+        className="w-64 bg-white shadow-2xl flex flex-col border-0"
+        initial={{ x: -100, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ duration: 0.8 }}
+      >
+        {/* Logo */}
+        <motion.div 
+          className="p-6 border-b border-gray-200"
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
+        >
+          <div className="flex items-center space-x-3">
+            <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-orange-500 rounded-full flex items-center justify-center shadow-lg">
+              <span className="text-white font-bold text-lg">P</span>
             </div>
-
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex space-x-8">
-              {navigation.map((item) => {
-                const IconComponent = item.icon
-                return (
-                  <button
-                    key={item.name}
-                    onClick={() => navigate(item.href)}
-                    className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      isActive(item.href)
-                        ? 'text-blue-600 bg-blue-50'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                    }`}
-                  >
-                    <IconComponent className="h-4 w-4" />
-                    <span>{item.name}</span>
-                  </button>
-                )
-              })}
-            </nav>
-
-            {/* Right side */}
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="sm" className="hidden md:flex">
-                <Bell className="h-4 w-4" />
-              </Button>
-              <span className="text-gray-700 hidden md:block">Olá, {user?.email}</span>
-              <Button onClick={handleLogout} variant="outline" size="sm" className="hidden md:flex">
-                <LogOut className="h-4 w-4 mr-2" />
-                Sair
-              </Button>
-              
-              {/* Mobile menu button */}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="md:hidden"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              >
-                {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-              </Button>
-            </div>
+            <span className="text-xl font-bold text-gray-800">ProspectAI</span>
           </div>
-        </div>
+        </motion.div>
 
-        {/* Mobile Navigation */}
-        {mobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-200">
-            <div className="px-2 pt-2 pb-3 space-y-1">
-              {navigation.map((item) => {
-                const IconComponent = item.icon
-                return (
-                  <button
-                    key={item.name}
-                    onClick={() => {
-                      navigate(item.href)
-                      setMobileMenuOpen(false)
-                    }}
-                    className={`flex items-center space-x-3 w-full px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                      isActive(item.href)
-                        ? 'text-blue-600 bg-blue-50'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                    }`}
-                  >
-                    <IconComponent className="h-5 w-5" />
-                    <span>{item.name}</span>
-                  </button>
-                )
-              })}
-              <div className="border-t border-gray-200 pt-4 pb-3">
-                <div className="px-3 py-2">
-                  <p className="text-sm text-gray-500">Logado como:</p>
-                  <p className="text-sm font-medium text-gray-900">{user?.email}</p>
-                </div>
-                <Button
-                  onClick={handleLogout}
-                  variant="outline"
-                  size="sm"
-                  className="mx-3 w-auto"
-                >
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Sair
-                </Button>
+        {/* User Info */}
+        <motion.div 
+          className="p-6 border-b border-gray-200"
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
+        >
+          <div className="flex items-center space-x-3">
+            <div className="relative">
+              <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-orange-500 rounded-full flex items-center justify-center shadow-lg">
+                <UserIcon className="w-6 h-6 text-white" />
               </div>
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-gray-800 truncate">
+                {getUserName()}
+              </p>
+              <p className="text-xs text-gray-500 truncate">
+                {user?.email}
+              </p>
             </div>
           </div>
-        )}
-      </header>
+        </motion.div>
+
+        {/* Navigation */}
+        <nav className="flex-1 p-4">
+          <ul className="space-y-2">
+            {navigation.map((item, index) => {
+              const isActiveItem = isActive(item.href);
+              return (
+                <motion.li 
+                  key={item.name}
+                  initial={{ x: -20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 0.4 + index * 0.1, duration: 0.5 }}
+                >
+                  <button
+                    onClick={() => navigate(item.href)}
+                    className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 transform hover:scale-[1.02] ${
+                      isActiveItem
+                        ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg'
+                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                    }`}
+                  >
+                    <item.icon className="mr-3 h-5 w-5" />
+                    {item.name}
+                  </button>
+                </motion.li>
+              );
+            })}
+          </ul>
+        </nav>
+
+        {/* Logout Button */}
+        <motion.div 
+          className="p-4 border-t border-gray-200"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.6, duration: 0.5 }}
+        >
+          <Button
+            onClick={handleLogout}
+            variant="outline"
+            className="w-full flex items-center justify-center px-4 py-3 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 border-gray-300 transition-all duration-200 transform hover:scale-[1.02] h-12"
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            Sair
+          </Button>
+        </motion.div>
+      </motion.div>
 
       {/* Main Content */}
-      <main>{children}</main>
+      <motion.div 
+        className="flex-1 flex flex-col overflow-hidden"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.4, duration: 0.6 }}
+      >
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
+          {children}
+        </main>
+      </motion.div>
     </div>
   )
 }
